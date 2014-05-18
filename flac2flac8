@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# for each .flac:
+#   convert to .wav
+#   convert to .flac using flac -8
+#   convert to .flac using  flake -12
+#   choose smallest among flac 8, flake 12
+for flacfile in `find | grep "\.flac" | sort`
+do
+    avconv -i "$flacfile" "$flacfile.wav"
+    flac -8 "$flacfile.wav" -o "$flacfile.8.flac"
+    flake -12 "$flacfile.wav" -o "$flacfile.12.flac"
+    rm "$flacfile"
+    rm "$flacfile.wav"
+    flac8=`wc -c <"$flacfile.8.flac"`
+    flake=`wc -c <"$flacfile.12.flac"`
+    [ "$flake" -gt "$flac8" ] && rm -f "$flacfile.12.flac" && continue
+    [ "$flac8" -gt "$flake" ] && rm -f "$flacfile.8.flac" && continue
+    find | grep "flac.8.flac" | rename 's/flac.8.flac/flac/g'
+    find | grep "flac.12.flac" | rename 's/flac.12.flac/flac/g'
+done

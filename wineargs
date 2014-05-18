@@ -1,0 +1,12 @@
+#!/bin/sh
+# Converts any arguments that are existing UNIX paths to Wine paths
+# Passes other arguments through unchanged
+# Useful for launching Wine programs with filename arguments
+
+for arg in "$@"; do
+	if [ -e "$arg" ]; then
+		winepath -w "$arg"
+	else	
+		echo "$arg"
+	fi
+done

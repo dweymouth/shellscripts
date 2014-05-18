@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# May require non-standard package dateutil
+# to install: sudo apt-get install python3-dateutil
+# Written by Drew Weymouth and Andy M. Wang - Feburary-March 2014
+
+import sys
+from lxml import etree
+import datetime, time, dateutil.parser
+from getpass import getpass
+from textwrap import wrap
+from getopt import *
+from base64 import b64encode
+from http.client import HTTPSConnection
+
+def encodeUserData(username, password):
+	# simple wrapper function to encode the username & pass
+    return "Basic " + b64encode(bytes(username + ":" + password,"utf-8")).decode("ascii")
+
+def get_xml(username, label):
+	if '@' in username:
+		username = username[:username.index('@')]
+	password = getpass()
+	conn = HTTPSConnection("mail.google.com")
+	headers = { "Authorization" : encodeUserData(username, password) }
+	conn.request('GET', '/mail/feed/atom' + label, headers=headers)
+	return conn.getresponse().read()
+
+def print_entry(elem):
+	# Print a single email
+	subject,author,body='','',''
+	issued = None
+	for child in elem:
+		if 'title' in child.tag: subject = str(child.text)
+		if 'summary' in child.tag: body = str(child.text)
+		if 'author' in child.tag: author = str(child[0].text) \
+		+ ' <' + str(child[1].text) + '>'
+		if 'issued' in child.tag: # convert to datetime in current timezone
+			issued = dateutil.parser.parse(str(child.text)) \
+			+ datetime.timedelta(hours=time.timezone / -3600) #60*60
+	print('  From:    ' + author)
+	print('  Date:    ' +  issued.strftime("%Y-%m-%d %H:%M:%S"))
+	print('  Subject: ' +  subject)
+	# wrap body line to 80-ish characters
+	bodylines = wrap(body)
+	for line in bodylines:
+		if line == bodylines[0]: print('  Body:    ' + line)
+		else:                    print('           ' + line)
+	print('')
+
+def print_mail(root, limit):
+	# Print header and iterate through emails
+	#title,tagline,fullcount = '','',''
+	entries = []
+	for child in root:
+		if 'title' in child.tag: title = str(child.text)
+		if 'tagline' in child.tag: tagline = str(child.text)
+		if 'fullcount' in child.tag: fullcount = int(child.text)
+		if 'entry' in child.tag: entries.append(child)
+	print('\n' + title)
+	print(str(fullcount) + ' ' + tagline)
+	if fullcount > limit:
+		print('Showing latest ' + str(limit) + ' messages:')
+	print('')
+	for i in range(min(limit,len(entries))):
+		print_entry(entries[i])
+
+def usage():
+	print("\nUsage: gmailcheck [options] account")
+	print("  -l <label>, --label=<label>   Specify label (def. inbox)")
+	print("  -n <n>                        Number of messages to show (def. 10)")
+	print("  -x, --xml                     Print raw XML output\n")
+
+def main(argv):
+	try: options,remainder = gnu_getopt(argv, 'l:n:x', ['label=','xml'])
+	except GetoptError: usage(); return
+	if len(remainder) != 1: usage(); return
+	label=''; n = 10; xml = False
+	for opt,arg in options:
+		if opt in ('-l','--label'): label = arg.replace('/','-')
+		if opt in ('-x','--xml'): xml = True
+		if opt in ('-n'):
+			try: n = int(arg)
+			except: print('Option for -n must be an integer'); return
+	try:
+		xmltext = get_xml(remainder[0],label)
+		if xml: print(xmltext)
+		else: print_mail(etree.XML(xmltext),n)
+	except UnboundLocalError: print("ERROR: incorrect password")
+	except KeyboardInterrupt: pass
+	except:
+		print("ERROR: could not access mail.google.com (no internet connection?)")
+
+if __name__ == "__main__":
+	main(sys.argv[1:])

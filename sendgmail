@@ -1,0 +1,23 @@
+#!/bin/bash
+# has to be bash, not sh, because of read -sp
+# Written by Andy M. Wang, January 2014.
+
+if [ $# != 0 ]; then
+	echo 'Usage: gmail'
+	echo "  Uses Gmail's SMTP server and sends an email."
+	echo "  Prompts for sender/receiver, allows attachments"
+	echo "  Dependency: sendemail should be installed"
+	exit $?
+fi
+
+echo "Using Gmail's SMTP server smtp.gmail.com, port 587."
+read -p "To: " tofield
+read -p "From: " fromfield
+read -p "CC: " ccfield
+read -p "BCC: " bccfield
+read -p "Subject: " subject
+read -p "Attachments: " attachments
+read -sp "Password (hidden): " mypassword
+
+sendemail -f $fromfield -t $tofield -u $subject -cc $ccfield -bcc $bccfield \
+  -s smtp.gmail.com:587 -a $attachments -xu $fromfield -xp $mypassword

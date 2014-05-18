@@ -1,0 +1,8 @@
+#!/bin/sh
+# Recursively converts flac files in current directory to ogg q8
+
+NUM_THREADS=`grep processor /proc/cpuinfo | wc -l`
+OGG_Q=8
+
+find -type f -name "*.flac" | sort | parallel -j $NUM_THREADS \
+	oggenc -Q -q $OGG_Q "{}"

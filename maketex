@@ -1,0 +1,8 @@
+#!/bin/sh
+# Wrapper around latexmk to first compile and then clean
+
+if [ $# != 1 ]; then
+	echo "Usage: maketex <tex file>"
+else
+	latexmk -quiet -xelatex "$1" && latexmk -c
+fi

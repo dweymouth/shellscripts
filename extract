@@ -1,0 +1,29 @@
+#!/bin/sh
+# Adapted from http://tldp.org/LDP/abs/html/sample-bashrc.html
+
+if [ $# != 1 ]; then
+	echo "Usage: extract <archive file>"
+	return
+fi
+
+if [ -f "$1" ]; then
+case "$1" in
+	*.tar)		tar xvf "$1"	;;
+	*.tar.bz2)	tar xvjf "$1"	;;
+	*.tbz2)		tar xvjf "$1"	;;
+	*.tar.gz)	tar xvzf "$1"	;;
+	*.tgz)		tar xvzf "$1"	;;
+	*.tar.xz)	tar xvJf "$1"	;;
+	*.txz)		tar xvJf "$1"	;;
+	*.7z)		7z x "$1"		;;
+	*.bz2)		bunzip2 "$1"	;;
+	*.gz)		gunzip "$1"		;;
+	*.rar)		unrar x "$1"	;;
+	*.xz)		xz -d "$1"		;;
+	*.Z)		uncompress "$1"	;;
+	*.zip)		unzip "$1"		;;
+	*)			echo "'$1' cannot be extracted. Unknown archive format."
+esac
+else
+	echo "'$1' is not a valid file!"
+fi

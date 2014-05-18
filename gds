@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+"""
+Reports the total size of the current directory, or a given directory.
+Includes file count and subdirectory count (recursive).
+Written by Drew Weymouth
+February 2014
+"""
+
+import sys, os
+from stat import *
+
+def walktree(top):
+	""" Recursively traverse the given directory and return a triple
+	of (file count, subdirectory count, total size). """
+	filecount,dircount,totalsize = 0,0,0
+	for f in os.listdir(top):
+		pathname = os.path.join(top,f)
+		try:
+			stat = os.stat(pathname)
+			if S_ISDIR(stat.st_mode):
+				fc,dc,ts = walktree(pathname)
+				filecount += fc
+				totalsize += ts
+				dircount += 1 + dc
+			elif S_ISREG(stat.st_mode):
+				filecount += 1
+				totalsize += stat.st_size
+		except OSError as e:
+			print e
+	return filecount,dircount,totalsize
+
+def format_size_string(size):
+	if size > 1073741824:
+		return '{0:.2f}'.format(size/1073741824.) + " GiB"
+	elif size > 1048576:
+		return '{0:.2f}'.format(size/1048576.) + " MiB"
+	elif size > 1024:
+		return '{0:.2f}'.format(size/1024.) + " KiB"
+	else: return str(size) + " bytes"
+
+def print_usage():
+	print "Usage: gds [directory]"
+	print "Reports total size of given directory,"
+	print "or the current directory if none given."
+	sys.exit()
+
+def gds(dir):
+	""" Pretty-print the result of walktree(dir), 
+	Or print the path and size only if dir is a regular file. """
+	if not os.path.exists(dir):
+		print "Error:",dir,"is not a valid file or directory."
+		return
+	if os.path.isfile(dir):
+		ts = os.path.getsize(dir)
+		print "Path:       ", os.path.abspath(dir)
+	else:
+		fc,dc,ts = walktree(dir)
+		print "Path:       ", os.path.abspath(dir)
+		print "Files:      ", fc
+		print "Directories:", dc
+	print "Total Size: ", format_size_string(ts)
+
+def main():
+	if len(sys.argv) == 1: gds(os.getcwd())
+	elif sys.argv[1] == "--help": print_usage()
+	for dir in sys.argv[1:]: gds(dir)
+
+if __name__ == "__main__":
+	main()

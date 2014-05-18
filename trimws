@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Written by Drew Weymouth (asw75) and Andy Wang (amw275)
+#   CS2043: UNIX Tools and Scripting, Feb. 2013
+#   Modified May 2014
+# Requires bash (not sh) because of read -n 1
+#
+# Trims whitespace from the end of each line in the input file(s)
+# Writes the result back out to the same file(s)
+#	example: trimws *.txt
+# Warning: DO NOT run this on binary files!
+
+if [ $# -eq 0 ]; then
+	echo 'trimws: trim trailing whitespace from lines in text files'
+	echo '  No file(s) given. Usage: trimws [file(s)]'
+	exit
+fi
+
+tmpfile=`mktemp`
+
+for file in "$@"; do
+	if [ -f "$file" ]; then
+		# check if it's a binary file
+		file -i "$file" | grep binary > /dev/null
+		if [ $? -eq 0 ]; then # prompt user
+			read -p "'$file' appears to be a binary file. Trim anyway? (Y/n) " -n 1 -r
+			echo # new line
+			[ $REPLY != 'y' -a $REPLY != 'Y' ] && continue # skip file
+		fi
+		# trim file
+		echo "Trimming '$file'"
+		sed "s/[\t ]*$//g" "$file" > "$tmpfile"
+		cp "$tmpfile" "$file"
+	else
+		echo "'$file' is not a regular file - skipping"
+	fi
+done
+
+rm -f "$tmpfile"
