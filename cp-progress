@@ -1,10 +1,17 @@
 #! /bin/sh
+# Copies a file or directory, displaying a progress bar during the transfer.
 
-if [ -d "$1" -a -d "$2" ]; then
-    SOURCE="$1"
-    DEST="$2"
-    SIZE=$(du -sb "$SOURCE"|awk '{print $1}')
-    (cd "$SOURCE" && tar -cf - *)|bar -s $SIZE| (cd "$DEST" && tar -xBpf -)
+if [ $# -ne 2 ]; then
+	echo "usage: $0 <source> <destination>"
+	exit
+fi
+
+if [ -f "$1" ]; then # file-to-file or file-to-dir
+	bar "$1" "$2"
+elif [ -d "$1" ]; then # recursive directory copy
+    SIZE=$(du -sb "$1" | awk '{print $1}')
+	mkdir -p "$2"
+    (cd "$1" && tar -cf - .) | bar -s $SIZE | (cd "$2" && tar -xBpf -)
 else
-    echo "usage: $0 <source dir> <dest dir>"
+	echo "Error: '$1' is not a valid file or directory"
 fi
