@@ -1,6 +1,7 @@
 Shellscripts
 ============
 
+* cp-progress - display progress bar during a file/directory transfer
 * extract - easily extract any type of archive file (from pub. domain)
 * flac2flac8 - re-encode all flac files in current dir. to level 8
 * flac2ogg8 - convert all flac files in current dir. to ogg q8
