@@ -1,0 +1,10 @@
+#! /bin/sh
+
+if [ -d "$1" -a -d "$2" ]; then
+    SOURCE="$1"
+    DEST="$2"
+    SIZE=$(du -sb "$SOURCE"|awk '{print $1}')
+    (cd "$SOURCE" && tar -cf - *)|bar -s $SIZE| (cd "$DEST" && tar -xBpf -)
+else
+    echo "usage: $0 <source dir> <dest dir>"
+fi
